@@ -1,0 +1,13 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: valuation-of-funds
+
+# 恒生开放互联平台 OAuth2（生产环境建议用环境变量覆盖 app-key / app-secret）
+hscloud:
+  oauth:
+    token-url: https://open.hscloud.cn/oauth2/oauth2/token
+    app-key: 569fb461-e0e6-4bc6-9199-67eea43d3fa1
+    app-secret: 39c73856-55d5-4191-b14b-8baa4408a9c3
