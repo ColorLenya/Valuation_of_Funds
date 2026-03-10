@@ -5,16 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>基金估值查询</title>
   <style>
-    body { font-family: "Microsoft YaHei", sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+    body { font-family: "Microsoft YaHei", sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
     h1 { font-size: 1.25rem; margin-bottom: 1rem; }
     .row { margin-bottom: 1rem; }
     label { display: block; margin-bottom: 0.25rem; color: #333; }
-    input[type="text"] { width: 100%; padding: 0.5rem; box-sizing: border-box; }
+    input[type="text"] { width: 100%; max-width: 200px; padding: 0.5rem; box-sizing: border-box; }
     button { padding: 0.5rem 1.5rem; background: #1890ff; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
     button:hover { background: #40a9ff; }
     button:disabled { background: #ccc; cursor: not-allowed; }
-    .result { margin-top: 1rem; padding: 1rem; background: #f5f5f5; border-radius: 4px; white-space: pre-wrap; word-break: break-all; font-size: 0.9rem; min-height: 2rem; }
-    .error { color: #c00; }
+    .result { margin-top: 1rem; }
+    .error { color: #c00; margin-top: 0.5rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.9rem; }
+    th, td { border: 1px solid #ddd; padding: 0.5rem 0.75rem; text-align: left; }
+    th { background: #f5f5f5; font-weight: 600; }
+    tr:nth-child(even) { background: #fafafa; }
+    .empty-tip { color: #888; padding: 1rem; }
   </style>
 </head>
 <body>
@@ -28,18 +33,68 @@
   </div>
   <div class="row">
     <label>返回结果</label>
-    <div class="result" id="result">（点击「查询」发送请求）</div>
+    <div class="result" id="result">
+      <div class="empty-tip" id="emptyTip">（点击「查询」发送请求）</div>
+      <div class="error" id="errorEl" style="display:none;"></div>
+      <div id="tableWrap" style="display:none;"></div>
+    </div>
   </div>
 
   <script>
     const secuInput = document.getElementById('secu_codes');
     const queryBtn = document.getElementById('queryBtn');
-    const resultEl = document.getElementById('result');
+    const emptyTip = document.getElementById('emptyTip');
+    const errorEl = document.getElementById('errorEl');
+    const tableWrap = document.getElementById('tableWrap');
+
+    const COLUMNS = [
+      { key: 'target_time', label: '查询时间' },
+      { key: 'estimated_nav', label: '预估净值' },
+      { key: 'estimated_change', label: '预估涨跌幅' },
+      { key: 'fundcode', label: '基金代码' }
+    ];
+
+    function showError(msg) {
+      emptyTip.style.display = 'none';
+      tableWrap.style.display = 'none';
+      errorEl.style.display = 'block';
+      errorEl.textContent = msg;
+    }
+
+    function showTable(list) {
+      errorEl.style.display = 'none';
+      emptyTip.style.display = 'none';
+      tableWrap.style.display = 'block';
+      if (!list || list.length === 0) {
+        tableWrap.innerHTML = '<div class="empty-tip">暂无数据</div>';
+        return;
+      }
+      let html = '<table><thead><tr>';
+      COLUMNS.forEach(function (c) { html += '<th>' + c.label + '</th>'; });
+      html += '</tr></thead><tbody>';
+      list.forEach(function (row) {
+        html += '<tr>';
+        COLUMNS.forEach(function (c) {
+          let val = row[c.key];
+          if (val === null || val === undefined) val = '';
+          html += '<td>' + val + '</td>';
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      tableWrap.innerHTML = html;
+    }
+
+    function showEmptyTip() {
+      errorEl.style.display = 'none';
+      tableWrap.style.display = 'none';
+      emptyTip.style.display = 'block';
+    }
 
     queryBtn.addEventListener('click', async function () {
       const secu_codes = (secuInput.value || '').trim();
-      resultEl.textContent = '请求中…';
-      resultEl.classList.remove('error');
+      showEmptyTip();
+      emptyTip.textContent = '请求中…';
       queryBtn.disabled = true;
 
       try {
@@ -50,15 +105,25 @@
         });
         const text = await res.text();
         if (!res.ok) {
-          resultEl.textContent = 'HTTP ' + res.status + '\n' + text;
-          resultEl.classList.add('error');
+          showError('HTTP ' + res.status + '\n' + text);
+          return;
+        }
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          showError('响应不是有效 JSON: ' + text);
+          return;
+        }
+        if (Array.isArray(data)) {
+          showTable(data);
         } else {
-          resultEl.textContent = text || '（无内容）';
+          showError(typeof data === 'string' ? data : JSON.stringify(data));
         }
       } catch (e) {
-        resultEl.textContent = '请求失败: ' + e.message;
-        resultEl.classList.add('error');
+        showError('请求失败: ' + e.message);
       } finally {
+        emptyTip.textContent = '（点击「查询」发送请求）';
         queryBtn.disabled = false;
       }
     });

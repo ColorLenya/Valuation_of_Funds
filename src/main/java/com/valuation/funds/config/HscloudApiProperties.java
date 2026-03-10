@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 public class HscloudApiProperties {
 
     /** 基金估值最新点位接口 URL */
-    private String fundValuationUrl = "https://sandbox.hscloud.cn/gildatafund/v1/fundestimate/fundvaluation_lastpoint";
+    private String fundValuationUrl;//= "https://sandbox.hscloud.cn/gildatafund/v1/fundestimate/fundvaluation_lastpoint";
 
     public String getFundValuationUrl() {
         return fundValuationUrl;
