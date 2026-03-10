@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>基金估值查询</title>
+  <style>
+    body { font-family: "Microsoft YaHei", sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.25rem; margin-bottom: 1rem; }
+    .row { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.25rem; color: #333; }
+    input[type="text"] { width: 100%; padding: 0.5rem; box-sizing: border-box; }
+    button { padding: 0.5rem 1.5rem; background: #1890ff; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #40a9ff; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    .result { margin-top: 1rem; padding: 1rem; background: #f5f5f5; border-radius: 4px; white-space: pre-wrap; word-break: break-all; font-size: 0.9rem; min-height: 2rem; }
+    .error { color: #c00; }
+  </style>
+</head>
+<body>
+  <h1>基金估值最新点位</h1>
+  <div class="row">
+    <label for="secu_codes">证券代码（secu_codes）</label>
+    <input type="text" id="secu_codes" placeholder="例如：020156" value="020156">
+  </div>
+  <div class="row">
+    <button type="button" id="queryBtn">查询</button>
+  </div>
+  <div class="row">
+    <label>返回结果</label>
+    <div class="result" id="result">（点击「查询」发送请求）</div>
+  </div>
+
+  <script>
+    const secuInput = document.getElementById('secu_codes');
+    const queryBtn = document.getElementById('queryBtn');
+    const resultEl = document.getElementById('result');
+
+    queryBtn.addEventListener('click', async function () {
+      const secu_codes = (secuInput.value || '').trim();
+      resultEl.textContent = '请求中…';
+      resultEl.classList.remove('error');
+      queryBtn.disabled = true;
+
+      try {
+        const res = await fetch('/api/fund-valuation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ secu_codes: secu_codes })
+        });
+        const text = await res.text();
+        if (!res.ok) {
+          resultEl.textContent = 'HTTP ' + res.status + '\n' + text;
+          resultEl.classList.add('error');
+        } else {
+          resultEl.textContent = text || '（无内容）';
+        }
+      } catch (e) {
+        resultEl.textContent = '请求失败: ' + e.message;
+        resultEl.classList.add('error');
+      } finally {
+        queryBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

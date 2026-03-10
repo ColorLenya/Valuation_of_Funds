@@ -5,9 +5,13 @@ spring:
   application:
     name: valuation-of-funds
 
-# 恒生开放互联平台 OAuth2（生产环境建议用环境变量覆盖 app-key / app-secret）
+# 恒生开放互联平台 OAuth2
+# 测试环境: sandbox.hscloud.cn  生产环境: open.hscloud.cn
 hscloud:
   oauth:
-    token-url: https://open.hscloud.cn/oauth2/oauth2/token
-    app-key: 569fb461-e0e6-4bc6-9199-67eea43d3fa1
-    app-secret: 39c73856-55d5-4191-b14b-8baa4408a9c3
+    token-url: https://sandbox.hscloud.cn/oauth2/oauth2/token
+    app-key: ba675108-f62c-417a-a345-f2387ec5373a
+    app-secret: 7b014793-d1f9-4571-aab8-c8bf1c3c4daf
+  api:
+    # 基金估值最新点位（测试环境）
+    fund-valuation-url: https://sandbox.hscloud.cn/gildatafund/v1/fundestimate/fundvaluation_lastpoint
